@@ -2,6 +2,9 @@
 
 - [`0.1.0`, `0.1.0` (*0.1.0/Dockerfile*)](https://github.com/Accenture/adop-gerrit/blob/master/Dockerfile.md)
 
+
+ Hello, Liatrio. 
+
 # What is docker-gerrit?
 
 adop-gerrit is a wrapper for the openfrontier/gerrit image. It has primarily been built to perform extended configuration.
