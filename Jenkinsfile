@@ -10,6 +10,7 @@ pipeline {
 	stages {
 		stage('validate'){
 			doesVersionExist(${params.username}, ${params.password}, ${params.repository}, ${params.image}, '')
+			getLatestVersion(${params.username}, ${params.password}, ${params.repository}, ${params.image})
 			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Validation failed"
 		}
 		stage('build'){
