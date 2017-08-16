@@ -17,7 +17,6 @@ pipeline {
 			steps {
 				sh 'docker build -t liatrio/${params.image}:${params.branch} .'
 				sh 'docker push liatrio/${params.image}:${params.branch}'
-				sh './test/validation/validation.sh'
 			}
 			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Build for ${params.image} failed"
 		}
