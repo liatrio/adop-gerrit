@@ -9,7 +9,6 @@ pipeline {
 				}
 			}
 			steps {
-				git branch: '${params.branch}', url: 'https://github.com/liatrio/ldop-gerrit.git'
 				sh 'hadolint - Dockerfile'
 			}
 		}
