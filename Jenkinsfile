@@ -13,8 +13,8 @@ pipeline {
 		}
 		stage('${params.image}-validate'){
 			agent any
-			git branch: '${params.branch}', url: ''
 			steps {
+				git branch: '${params.branch}', url: ''
 				doesVersionExist(${params.username}, ${params.password}, ${params.repository}, ${params.image}, '')
 				getLatestVersion(${params.username}, ${params.password}, ${params.repository}, ${params.image})
 			}
