@@ -1,3 +1,4 @@
+//ldop-gerrit/Jenkinsfile
 pipeline {
 	agent none
 	stages {
@@ -8,7 +9,8 @@ pipeline {
 				}
 			}
 			steps {
-				sh ''
+				git branch: '${params.branch}', url: 'https://github.com/liatrio/ldop-gerrit.git'
+				sh 'hadolint - Dockerfile'
 			}
 		}
 		stage('${params.image}-validate'){
@@ -29,7 +31,8 @@ pipeline {
 		stage('ldop-integration-testing'){
 			agent any
 			steps {
-				testSuite(${params.image}, ${params.branch})
+				//testSuite(${params.image}, ${params.branch})
+				echo 'run test suite'
 			}
 		}
 		stage('ldop-image-deploy'){
