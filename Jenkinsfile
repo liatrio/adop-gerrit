@@ -8,30 +8,29 @@ pipeline {
 		string(defaultValue: "master", description: 'what branch is this?', name: 'branch')
 	}
 	stages {
-		stage('validate'){
+		stage('${params.image}-0-validate'){
 			doesVersionExist(${params.username}, ${params.password}, ${params.repository}, ${params.image}, '')
 			getLatestVersion(${params.username}, ${params.password}, ${params.repository}, ${params.image})
-			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Validation failed"
+			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Validation for ${params.image} failed"
 		}
-		stage('build'){
+		stage('${params.image}-1-build'){
 			steps {
 				sh 'docker build -t liatrio/${params.image}:${params.branch} .'
 				sh 'docker push liatrio/${params.image}:${params.branch}'
 				sh './test/validation/validation.sh'
-				testSuite(${params.image}, ${params.branch})
 			}
-			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Build failed"
+			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Build for ${params.image} failed"
 		}
-		stage('test'){
+		stage('ldop-integration-testing'){
 			testSuite(${params.image}, ${params.branch})
-			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Integration failed"
+			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Integration for ${params.image} failed"
 		}
-		stage('deploy'){
+		stage('ldop-image-deploy'){
 			steps {
 				sh 'docker tag liatrio/${IMAGE_NAME}:${TOPIC} liatrio/${IMAGE_NAME}:${IMAGE_VERSION}'
 				sh 'docker push liatrio/${IMAGE_NAME}:${IMAGE_VERSION}'
 			}
-			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Deployment failed"
+			slackSend baseUrl: "https://liatrio.slack.com", channel: "#ldop", message: "Deployment for ${params.image} failed"
 		}
 	}
 }
