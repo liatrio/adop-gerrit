@@ -1,5 +1,23 @@
+//ldop-gerrit/Jenkinsfile
 pipeline {
   agent none
+
+  options{
+      colorizeOutput()
+      githubProjectUrl(repoURL)
+  }
+
+  scm {
+      git {
+          remote {
+              url(repoURL)
+          }
+          extensions {
+              gitTagMessageExtension()
+          }
+      }
+  }
+
   stages {
       stage('hadolint-lint'){
           agent {
@@ -9,7 +27,6 @@ pipeline {
               }
           }
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh 'hadolint Dockerfile || true'
           }
          post {
@@ -28,7 +45,6 @@ pipeline {
               }
           }
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh 'dockerlint -f Dockerfile || true'
           }
          post {
@@ -48,7 +64,6 @@ pipeline {
               }
           }
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh 'dockerfile_lint -f Dockerfile || true'
           }
          post {
@@ -63,7 +78,6 @@ pipeline {
       stage('ldop-gerrit-validate'){
           agent any
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh "echo \$(git tag --sort version:refname | tail -1) > result"
               script {
                   tag = readFile 'result'
