@@ -1,6 +1,21 @@
+//ldop-gerrit/Jenkinsfile
 pipeline {
-  agent none
-  stages {
+    agent none
+
+    stages {
+      stage('get-topic'){
+        agent any
+        steps {
+            sh "git branch"
+            sh "echo \$(git log -n 1 --pretty=%d HEAD | sed -n 's/.*origin\\/\\([A-Za-z0-9-]*\\))/\\1/p')"
+            sh "git rev-parse --abbrev-ref HEAD > result"
+            script {
+                TOPIC = readFile 'result'
+                TOPIC = TOPIC.trim()
+            }
+            echo "${TOPIC}"
+        }
+      }
       stage('hadolint-lint'){
           agent {
               docker {
@@ -9,7 +24,6 @@ pipeline {
               }
           }
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh 'hadolint Dockerfile || true'
           }
          post {
@@ -28,7 +42,6 @@ pipeline {
               }
           }
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh 'dockerlint -f Dockerfile || true'
           }
          post {
@@ -48,7 +61,6 @@ pipeline {
               }
           }
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh 'dockerfile_lint -f Dockerfile || true'
           }
          post {
@@ -63,13 +75,12 @@ pipeline {
       stage('ldop-gerrit-validate'){
           agent any
           steps {
-              git branch: 'LDOP-158-jenkinsfile', url: 'https://github.com/liatrio/ldop-gerrit.git'
               sh "echo \$(git tag --sort version:refname | tail -1) > result"
               script {
-                  tag = readFile 'result'
-                  tag = tag.trim()
+                  TAG = readFile 'result'
+                  TAG = TAG.trim()
               }
-              println doesVersionExist('liatrio', 'ldop-gerrit', "${tag}") 
+              println doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
               getLatestVersion('liatrio', 'ldop-gerrit')
           }
          post {
