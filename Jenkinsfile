@@ -1,24 +1,21 @@
 //ldop-gerrit/Jenkinsfile
 pipeline {
-  agent none
+    agent none
 
-  options{
-      colorizeOutput()
-      githubProjectUrl(repoURL)
-  }
-
-  scm {
-      git {
-          remote {
-              url(repoURL)
-          }
-          extensions {
-              gitTagMessageExtension()
-          }
+    stages {
+      stage('get-topic'){
+        agent any
+        steps {
+            sh "git branch"
+            sh "echo \$(git log -n 1 --pretty=%d HEAD | sed -n 's/.*origin\\/\\([A-Za-z0-9-]*\\))/\\1/p')"
+            sh "git rev-parse --abbrev-ref HEAD > result"
+            script {
+                TOPIC = readFile 'result'
+                TOPIC = TOPIC.trim()
+            }
+            echo "${TOPIC}"
+        }
       }
-  }
-
-  stages {
       stage('hadolint-lint'){
           agent {
               docker {
@@ -80,10 +77,10 @@ pipeline {
           steps {
               sh "echo \$(git tag --sort version:refname | tail -1) > result"
               script {
-                  tag = readFile 'result'
-                  tag = tag.trim()
+                  TAG = readFile 'result'
+                  TAG = TAG.trim()
               }
-              println doesVersionExist('liatrio', 'ldop-gerrit', "${tag}") 
+              println doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
               getLatestVersion('liatrio', 'ldop-gerrit')
           }
          post {
