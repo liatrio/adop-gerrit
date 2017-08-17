@@ -8,6 +8,7 @@ pipeline {
         steps {
             sh "git branch"
             sh "echo \$(git log -n 1 --pretty=%d HEAD | sed -n 's/.*origin\\/\\([A-Za-z0-9-]*\\))/\\1/p') > result"
+			echo "env.BRANCH_NAME"
             script {
                 TOPIC = readFile 'result'
                 TOPIC = TOPIC.trim()
