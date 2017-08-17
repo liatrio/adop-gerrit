@@ -3,22 +3,6 @@ pipeline {
     agent none
 
     stages {
-      stage('get-topic'){
-        agent any
-        steps {
-			checkout scm
-            sh "env"
-            sh "printenv"
-            sh "git branch"
-            sh "echo \$(git log -n 1 --pretty=%d HEAD | sed -n 's/.*origin\\/\\([A-Za-z0-9-]*\\))/\\1/p') > result"
-			echo "${env.BRANCH_NAME}"
-            script {
-                TOPIC = readFile 'result'
-                TOPIC = TOPIC.trim()
-            }
-            echo "${TOPIC}"
-        }
-      }
       stage('hadolint-lint'){
           agent {
               docker {
@@ -83,67 +67,33 @@ pipeline {
                   TAG = readFile 'result'
                   TAG = TAG.trim()
               }
-              println doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
-              getLatestVersion('liatrio', 'ldop-gerrit')
-          }
-         post {
-              failure {
-                  script {
-                      subject = "failure: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-                  }
-                  slackSend (color: '#FF0000', message: "${subject} (${env.BUILD_URL})")
-              }
+              doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
           }
       }
       stage('ldop-gerrit-build'){
           agent any
           steps {
-              //need sh " TOPIC="${GIT_BRANCH#*/}" "
-              //need sh "docker build -t liatrio/ldop-gerrit:${topic?} ."
-              //need sh 'docker push liatrio/ldop-gerrit:${topic?}'
-              echo 'build gerrit'
-          }
-         post {
-              failure {
-                  script {
-                      subject = "failure: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-                  }
-                  slackSend (color: '#FF0000', message: "${subject} (${env.BUILD_URL})")
-              }
+              sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
+              sh "docker build -t chadliatrio/ldop-gerrit:${env.BRANCH_NAME} ."
+              sh "docker push chadliatrio/ldop-gerrit:${env.BRANCH_NAME}"
           }
       }
       stage('ldop-integration-testing'){
           agent any
           steps {
               git branch: 'master', url: 'https://github.com/liatrio/ldop-docker-compose'
-              //need TOPIC="${TOPIC#*/}"
-              //testSuite("ldop-gerrit", "${tag}")
-              echo 'run test suite'
-          }
-         post {
-              failure {
-                  script {
-                      subject = "failure: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-                  }
-                  slackSend (color: '#FF0000', message: "${subject} (${env.BUILD_URL})")
-              }
+              sh "whoami"
+              sh "ls -al"
+              sh "pwd"
+              testSuite("ldop-gerrit", "${TAG}")
           }
       }
       stage('ldop-image-deploy'){
           agent any
           steps {
-              //need TOPIC="${TOPIC#*/}"
-              //sh 'docker tag liatrio/ldop-gerrit:${tag} liatrio/ldop-gerrit:${IMAGE_VERSION}'
-              //sh 'docker push liatrio/${IMAGE_NAME}:${IMAGE_VERSION}'
-              echo 'deploying stage'
-          }
-         post {
-              failure {
-                  script {
-                      subject = "failure: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-                  }
-                  slackSend (color: '#FF0000', message: "${subject} (${env.BUILD_URL})")
-              }
+              sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
+              sh "docker tag chadliatrio/ldop-gerrit:${env.BRANCH_NAME} chadliatrio/ldop-gerrit:${TAG}"
+              sh "docker push chadliatrio/ldop-gerrit:${TAG}"
           }
       }
   }
