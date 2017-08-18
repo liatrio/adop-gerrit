@@ -70,14 +70,14 @@ pipeline {
               doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
           }
       }
-      stage('ldop-gerrit-build'){
+      /*stage('ldop-gerrit-build'){
           agent any
           steps {
               sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
               sh "docker build -t chadliatrio/ldop-gerrit:${env.BRANCH_NAME} ."
               sh "docker push chadliatrio/ldop-gerrit:${env.BRANCH_NAME}"
           }
-      }
+      }*/
       stage('ldop-integration-testing'){
           agent any
           steps {
