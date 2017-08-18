@@ -14,7 +14,7 @@ pipeline {
               sh 'hadolint Dockerfile || true'
           }
          post {
-              failure {
+              changed {
                   script {
                       subject = "failure: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
                   }
@@ -32,7 +32,7 @@ pipeline {
               sh 'dockerlint -f Dockerfile || true'
           }
          post {
-              failure {
+              changed {
                   script {
                       subject = "failure: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
                   }
@@ -51,7 +51,7 @@ pipeline {
               sh 'dockerfile_lint -f Dockerfile || true'
           }
          post {
-              failure {
+              changed {
                   script {
                       subject = "failure: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
                   }
@@ -70,24 +70,37 @@ pipeline {
               doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
           }
       }
-      /*stage('ldop-gerrit-build'){
+      stage('ldop-gerrit-build'){
           agent any
           steps {
               sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
               sh "docker build -t chadliatrio/ldop-gerrit:${env.BRANCH_NAME} ."
               sh "docker push chadliatrio/ldop-gerrit:${env.BRANCH_NAME}"
           }
-      }*/
+      }
       stage('ldop-integration-testing'){
-          agent any
+          agent {
+            docker {
+              image "hashicorp/terraform:full"
+              args "-u root"
+            }
+          }
           steps {
               git branch: 'master', url: 'https://github.com/liatrio/ldop-docker-compose'
-              sh "echo $(pwd) > result"
+              sh "echo \$(pwd) > result"
               script {
                 DIR = readFile 'result'
-                DIR = DIR.tag()
+                DIR = DIR.trim()
               }
               testSuite("ldop-gerrit", "${TAG}", "${DIR}")
+              sh "export TF_VAR_branch_name=\"${env.BRANCH_NAME}\""
+              sh '''export AWS_ACCESS_KEY_ID=ACCESS_KEY_HERE &&
+                    export AWS_SECRET_ACCESS_KEY=SECRET_KEY_HERE &&
+                    sed -i 's/timeout 30m/timeout -t 1800/g' test/integration/run-integration-test.sh &&
+                    bash test/validation/validation.sh &&
+                    cd test/integration/ &&
+                    terraform init &&
+                    bash run-integration-test.sh'''
           }
       }
       stage('ldop-image-deploy'){
