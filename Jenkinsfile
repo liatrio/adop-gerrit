@@ -85,7 +85,7 @@ pipeline {
               sh "whoami"
               sh "ls -al"
               sh "pwd"
-              testSuite("ldop-gerrit", "${TAG}")
+              echo testSuite("ldop-gerrit", "${TAG}")
           }
       }
       stage('ldop-image-deploy'){
