@@ -87,7 +87,6 @@ pipeline {
               sh "pwd"
 			  sh 'touch /var/jenkins_home/workspace/gerrit_LDOP-158-jenkinsfile-PHWFZQFZEJ4N5CBJGHI44KBLM2THAGGOAXOR5PB3CBJ3HVGSPFFA/destination.txt'
 			  sh 'chmod 777 /var/jenkins_home/workspace/gerrit_LDOP-158-jenkinsfile-PHWFZQFZEJ4N5CBJGHI44KBLM2THAGGOAXOR5PB3CBJ3HVGSPFFA/destination.txt'
-			  sh 'chmod o+x /'
               testSuite("ldop-gerrit", "${TAG}")
           }
       }
