@@ -86,6 +86,7 @@ pipeline {
               sh "ls -al"
               sh "pwd"
 			  sh 'touch destination.txt'
+			  sh 'chmod 777 destination.txt'
 			  sh 'chmod o+x ~/'
               testSuite("ldop-gerrit", "${TAG}")
           }
