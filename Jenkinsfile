@@ -70,22 +70,23 @@ pipeline {
               doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
           }
       }
-      stage('ldop-gerrit-build'){
+      /*stage('ldop-gerrit-build'){
           agent any
           steps {
               sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
               sh "docker build -t chadliatrio/ldop-gerrit:${env.BRANCH_NAME} ."
               sh "docker push chadliatrio/ldop-gerrit:${env.BRANCH_NAME}"
           }
-      }
+      }*/
       stage('ldop-integration-testing'){
           agent any
           steps {
               git branch: 'master', url: 'https://github.com/liatrio/ldop-docker-compose'
-              sh "whoami"
-              sh "ls -al"
-              sh "pwd"
+              sh 'touch destination.txt'
+              sh 'chmod 777 destination.txt'
+              sh 'chmod o+x ~/'
               echo testSuite("ldop-gerrit", "${TAG}")
+              testSuite("ldop-gerrit", "${TAG}")
           }
       }
       stage('ldop-image-deploy'){
