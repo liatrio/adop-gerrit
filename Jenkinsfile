@@ -57,7 +57,6 @@ pipeline {
                 }
             }
             steps {
-                sh 'env'
                 sh 'dockerlint -f Dockerfile || true'
             }
             post {
@@ -255,18 +254,16 @@ pipeline {
     post {
         always {
             script {
-                RESULT = "Changes: "
+                RESULT = "*Job*\n• ${SUBJECT}\n*Status*\n• ${STATUS}\n*URL*\n• ${env.JOB_URL}\n*Changes*\n"
 
-                def changeLogSets = currentBuild.changeSets
-
-                for (entry in changeLogSets) {
-                    entry.all {
-                        RESULT = "\n" + RESULT + "${it.author}: ${it.msg}"
+                for (entry in currentBuild.changeSets) {
+                    for (item in entry) {
+                        RESULT = RESULT + "• ${item.author}: ${item.msg}\n"
                     }
                 }
 
                 if (CHANGED == "YES") {
-                    slackSend (color: "#${COLOR}", message: "${SUBJECT}. Result: ${STATUS}. (${env.JOB_URL}) ${RESULT}")
+                    slackSend (color: "#${COLOR}", message: "${RESULT}")
                 }
             }
         }
