@@ -26,7 +26,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'hadolint Dockerfile'
+                sh 'hadolint Dockerfile || true'
             }       
             post {
                 success {
@@ -35,7 +35,12 @@ pipeline {
                         STATUS = "SUCCESS"
                     }
                 }
-                failure { script { STATUS = "FAILURE" } }
+                failure {
+                    script {
+                        COLOR = "FF0000"
+                        STATUS = "FAILURE"
+                    }
+                }
                 changed {
                     script {
                         COLOR = "FFA500"
@@ -62,7 +67,12 @@ pipeline {
                         STATUS = "SUCCESS"
                     }
                 }
-                failure { script { STATUS = "FAILURE" } }
+                failure {
+                    script {
+                        COLOR = "FF0000"
+                        STATUS = "FAILURE"
+                    }
+                }
                 changed {
                     script {
                         COLOR = "FFA500"
@@ -89,7 +99,12 @@ pipeline {
                         STATUS = "SUCCESS"
                     }
                 }
-                failure { script { STATUS = "FAILURE" } }
+                failure {
+                    script {
+                        COLOR = "FF0000"
+                        STATUS = "FAILURE"
+                    }
+                }
                 changed {
                     script {
                         COLOR = "FFA500"
@@ -106,8 +121,11 @@ pipeline {
                 script {
                     TAG = readFile 'result'
                     TAG = TAG.trim()
+                    
+                    if (doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}")) {
+                        error("LDOP Gerrit version already exists, aborting...")
+                    }
                 }
-                doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}") 
             }
             post {
                 success {
@@ -116,7 +134,12 @@ pipeline {
                         STATUS = "SUCCESS"
                     }
                 }
-                failure { script { STATUS = "FAILURE" } }
+                failure {
+                    script {
+                        COLOR = "FF0000"
+                        STATUS = "FAILURE"
+                    }
+                }
                 changed {
                     script {
                         COLOR = "FFA500"
@@ -140,7 +163,12 @@ pipeline {
                         STATUS = "SUCCESS"
                     }
                 }
-                failure { script { STATUS = "FAILURE" } }
+                failure {
+                    script {
+                        COLOR = "FF0000"
+                        STATUS = "FAILURE"
+                    }
+                }
                 changed {
                     script {
                         COLOR = "FFA500"
@@ -179,7 +207,12 @@ pipeline {
                         STATUS = "SUCCESS"
                     }
                 }
-                failure { script { STATUS = "FAILURE" } }
+                failure {
+                    script {
+                        COLOR = "FF0000"
+                        STATUS = "FAILURE"
+                    }
+                }
                 changed {
                     script {
                         COLOR = "FFA500"
@@ -203,7 +236,12 @@ pipeline {
                         STATUS = "SUCCESS"
                     }
                 }
-                failure { script { STATUS = "FAILURE" } }
+                failure {
+                    script {
+                        COLOR = "FF0000"
+                        STATUS = "FAILURE"
+                    }
+                }
                 changed {
                     script {
                         COLOR = "FFA500"
@@ -217,7 +255,24 @@ pipeline {
     post {
         always {
             script {
-                slackSend (color: "#${COLOR}", message: "${SUBJECT}. Result: ${STATUS}. (${env.JOB_URL})")
+                RESULT = ""
+                def changeLogSets = currentBuild.changeSets
+                for (int i = 0; i < changeLogSets.size(); i++) {
+                    def entries = changeLogSets[i].items
+                    for (int j = 0; j < entries.length; j++) {
+                        def entry = entries[j]
+                        echo "${entry.commitId} by ${entry.author} on ${new Date(entry.timestamp)}: ${entry.msg}"
+                        def files = new ArrayList(entry.affectedFiles)
+                        for (int k = 0; k < files.size(); k++) {
+                            def file = files[k]
+                            RESULT = "\n" + RESULT + "${file.editType.name} ${file.path}"
+                        }
+                    }
+                }
+
+                if (CHANGED == "YES") {
+                    slackSend (color: "#${COLOR}", message: "${SUBJECT}. Result: ${STATUS}. (${env.JOB_URL}) ${RESULT}")
+                }
             }
         }
     }
