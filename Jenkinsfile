@@ -255,13 +255,13 @@ pipeline {
     post {
         always {
             script {
-                RESULT = "All changes: "
+                RESULT = "Changes: "
+
                 def changeLogSets = currentBuild.changeSets
-                for (int i = 0; i < changeLogSets.size(); i++) {
-                    def entries = changeLogSets[i].items
-                    for (int j = 0; j < entries.length; j++) {
-                        def entry = entries[j]
-                        RESULT = "\n" + RESULT + "${entry.author}: ${entry.msg}"
+
+                for (entry in changeLogSets) {
+                    entry.all {
+                        RESULT = "\n" + RESULT + "${it.author}: ${it.msg}"
                     }
                 }
 
