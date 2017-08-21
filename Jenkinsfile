@@ -1,9 +1,10 @@
 //ldop-gerrit/Jenkinsfile
+
 pipeline {
     agent none
 
     stages {
-        stage('pipeline-init'){
+        stage('pipeline-init') {
             agent any 
 
             steps {
@@ -12,13 +13,14 @@ pipeline {
                     STATUS = ""
                     CHANGED = "NO"
 
+                    CHANGES = ""
                     SUBJECT = ""
 
-                    COLOR = "FF0000"
+                    COLOR = ""
                 }
             }
         }
-        stage('hadolint-lint'){
+        stage('hadolint-lint') {
             agent {
                 docker {
                     image "lukasmartinelli/hadolint"
@@ -26,6 +28,7 @@ pipeline {
                 }
             }
             steps {
+                script { CHANGED = "NO" }
                 sh 'hadolint Dockerfile || true'
             }       
             post {
@@ -43,20 +46,21 @@ pipeline {
                 }
                 changed {
                     script {
-                        COLOR = "FFA500"
+                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'hadolint-lint'" } }
             }
         }
-        stage('dockerlint-lint'){
+        stage('dockerlint-lint') {
             agent {
                 docker {
                     image "redcoolbeans/dockerlint"
                 }
             }
             steps {
+                script { CHANGED = "NO" }
                 sh 'dockerlint -f Dockerfile || true'
             }
             post {
@@ -74,14 +78,14 @@ pipeline {
                 }
                 changed {
                     script {
-                        COLOR = "FFA500"
+                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'dockerlint-lint'" } }
             }
         }
-        stage('dockerfile-lint'){
+        stage('dockerfile-lint') {
             agent {
                 docker {
                     image "projectatomic/dockerfile-lint"
@@ -89,6 +93,7 @@ pipeline {
                 }
             }
             steps {
+                script { CHANGED = "NO" }
                 sh 'dockerfile_lint -f Dockerfile || true'
             }
             post {
@@ -106,14 +111,14 @@ pipeline {
                 }
                 changed {
                     script {
-                        COLOR = "FFA500"
+                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'dockerfile-lint'" } }
             }
         }
-        stage('ldop-gerrit-validate'){
+        stage('ldop-gerrit-validate') {
             agent any
             steps {
                 sh "echo \$(git tag --sort version:refname | tail -1) > result"
@@ -121,6 +126,8 @@ pipeline {
                     TAG = readFile 'result'
                     TAG = TAG.trim()
                     
+                    CHANGED = "NO"
+
                     if (doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}")) {
                         error("LDOP Gerrit version already exists, aborting...")
                     }
@@ -141,17 +148,17 @@ pipeline {
                 }
                 changed {
                     script {
-                        COLOR = "FFA500"
+                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'ldop-gerrit-validate'" } }
             }
         }
-        stage('ldop-gerrit-build'){
+        stage('ldop-gerrit-build') {
             agent any
             steps {
-                // sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
+                script { CHANGED = "NO" }
                 sh "docker build -t liatrio/ldop-gerrit:${env.BRANCH_NAME} ."
                 sh "docker push liatrio/ldop-gerrit:${env.BRANCH_NAME}"
             }
@@ -170,14 +177,14 @@ pipeline {
                 }
                 changed {
                     script {
-                        COLOR = "FFA500"
+                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'ldop-gerrit-build'" } }
             }
         }
-        stage('ldop-integration-testing'){
+        stage('ldop-integration-testing') {
             agent {
               docker {
                 image "hashicorp/terraform:full"
@@ -190,6 +197,8 @@ pipeline {
                 script {
                   DIR = readFile 'result'
                   DIR = DIR.trim()
+
+                  CHANGED = "NO"
                 }
                 testSuite("ldop-gerrit", "${TAG}", "${DIR}")
                 sh "export TF_VAR_branch_name=\"${env.BRANCH_NAME}\""
@@ -214,17 +223,17 @@ pipeline {
                 }
                 changed {
                     script {
-                        COLOR = "FFA500"
+                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'ldop-integration-testing'" } }
             }
         }
-        stage('ldop-image-deploy'){
+        stage('ldop-image-deploy') {
             agent any
             steps {
-                // sh "docker login -u ${env.USERNAME} -p ${env.PASSWORD}"
+                script { CHANGED = "NO" }
                 sh "docker tag liatrio/ldop-gerrit:${env.BRANCH_NAME} liatrio/ldop-gerrit:${TAG}"
                 sh "docker push liatrio/ldop-gerrit:${TAG}"
             }
@@ -243,7 +252,7 @@ pipeline {
                 }
                 changed {
                     script {
-                        COLOR = "FFA500"
+                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -254,16 +263,18 @@ pipeline {
     post {
         always {
             script {
-                RESULT = "*Job*\n• ${SUBJECT}\n*Status*\n• ${STATUS}\n*URL*\n• ${env.JOB_URL}\n*Changes*\n"
-
-                for (entry in currentBuild.changeSets) {
-                    for (item in entry) {
-                        RESULT = RESULT + "• ${item.author}: ${item.msg}\n"
-                    }
-                }
-
                 if (CHANGED == "YES") {
-                    slackSend (color: "#${COLOR}", message: "${RESULT}")
+                    RESULT = "*Job*\n• ${SUBJECT}\n• ${env.JOB_URL}\n*Status*\n• ${STATUS}\n*Changes*\n"
+
+                    for (entry in currentBuild.changeSets) {
+                        for (item in entry) {
+                            CHANGES = CHANGES + "• ${item.msg} [${item.author}]\n"
+                        }
+                    }
+
+                    CHANGES = (CHANGES == "") ? "• no changes" : CHANGES
+
+                    slackSend (color: "#${COLOR}", message: "${RESULT}${CHANGES}")
                 }
             }
         }
