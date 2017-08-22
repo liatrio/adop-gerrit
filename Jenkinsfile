@@ -121,7 +121,8 @@ pipeline {
         stage('ldop-gerrit-validate') {
             agent any
             steps {
-                sh "echo \$(git tag --sort version:refname | tail -1) > result"
+                sh "git pull origin ${env.BRANCH_NAME}"
+                sh "echo \$(git tag -l | sort -V | tail -1) > result"
                 script {
                     TAG = readFile 'result'
                     TAG = TAG.trim()
