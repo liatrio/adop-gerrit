@@ -125,11 +125,15 @@ pipeline {
                 script {
                     TAG = readFile 'result'
                     TAG = TAG.trim()
-                    
+  
                     CHANGED = "NO"
+                  
+                    if (!(TAG ==~ /^[0-9]+\.[0-9]+\.[0-9]+$/)) {
+                        error("Invalid Git tag format! Aborting...")
+                    }
 
                     if (doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}")) {
-                        error("LDOP Gerrit version already exists, aborting...")
+                        error("LDOP Gerrit version already exists! Aborting...")
                     }
                 }
             }
@@ -264,17 +268,9 @@ pipeline {
         always {
             script {
                 if (CHANGED == "YES") {
-                    RESULT = "*Job*\n• ${SUBJECT}\n• ${env.JOB_URL}\n*Status*\n• ${STATUS}\n*Changes*\n"
+                    RESULT = formatSlackOutput(SUBJECT, env.JOB_URL, currentBuild.changeSets, STATUS)
 
-                    for (entry in currentBuild.changeSets) {
-                        for (item in entry) {
-                            CHANGES = CHANGES + "• ${item.msg} [${item.author}]\n"
-                        }
-                    }
-
-                    CHANGES = (CHANGES == "") ? "• no changes" : CHANGES
-
-                    slackSend (color: "#${COLOR}", message: "${RESULT}${CHANGES}")
+                    slackSend (color: "#${COLOR}", message: "${RESULT}")
                 }
             }
         }
