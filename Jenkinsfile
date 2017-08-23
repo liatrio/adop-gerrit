@@ -34,19 +34,16 @@ pipeline {
             post {
                 success {
                     script {
-                        COLOR = "00FF00"
                         STATUS = "SUCCESS"
                     }
                 }
                 failure {
                     script {
-                        COLOR = "FF0000"
                         STATUS = "FAILURE"
                     }
                 }
                 changed {
                     script {
-                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -66,19 +63,16 @@ pipeline {
             post {
                 success {
                     script {
-                        COLOR = "00FF00"
                         STATUS = "SUCCESS"
                     }
                 }
                 failure {
                     script {
-                        COLOR = "FF0000"
                         STATUS = "FAILURE"
                     }
                 }
                 changed {
                     script {
-                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -99,19 +93,16 @@ pipeline {
             post {
                 success {
                     script {
-                        COLOR = "00FF00"
                         STATUS = "SUCCESS"
                     }
                 }
                 failure {
                     script {
-                        COLOR = "FF0000"
                         STATUS = "FAILURE"
                     }
                 }
                 changed {
                     script {
-                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -121,13 +112,11 @@ pipeline {
         stage('ldop-gerrit-validate') {
             agent any
             steps {
-                sh "git pull origin ${env.BRANCH_NAME}"
+                sh "git fetch"
                 sh "echo \$(git tag -l | sort -V | tail -1) > result"
                 script {
                     TAG = readFile 'result'
                     TAG = TAG.trim()
-  
-                    CHANGED = "NO"
                   
                     if (!(TAG ==~ /^[0-9]+\.[0-9]+\.[0-9]+$/)) {
                         error("Invalid Git tag format! Aborting...")
@@ -141,19 +130,16 @@ pipeline {
             post {
                 success {
                     script {
-                        COLOR = "00FF00"
                         STATUS = "SUCCESS"
                     }
                 }
                 failure {
                     script {
-                        COLOR = "FF0000"
                         STATUS = "FAILURE"
                     }
                 }
                 changed {
                     script {
-                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -170,19 +156,16 @@ pipeline {
             post {
                 success {
                     script {
-                        COLOR = "00FF00"
                         STATUS = "SUCCESS"
                     }
                 }
                 failure {
                     script {
-                        COLOR = "FF0000"
                         STATUS = "FAILURE"
                     }
                 }
                 changed {
                     script {
-                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -216,19 +199,16 @@ pipeline {
             post {
                 success {
                     script {
-                        COLOR = "00FF00"
                         STATUS = "SUCCESS"
                     }
                 }
                 failure {
                     script {
-                        COLOR = "FF0000"
                         STATUS = "FAILURE"
                     }
                 }
                 changed {
                     script {
-                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -245,19 +225,16 @@ pipeline {
             post {
                 success {
                     script {
-                        COLOR = "00FF00"
                         STATUS = "SUCCESS"
                     }
                 }
                 failure {
                     script {
-                        COLOR = "FF0000"
                         STATUS = "FAILURE"
                     }
                 }
                 changed {
                     script {
-                        COLOR = "00FF00"
                         CHANGED = "YES"
                     }
                 }
@@ -269,6 +246,12 @@ pipeline {
         always {
             script {
                 if (CHANGED == "YES") {
+                    if (STATUS == "SUCCESS") {
+                        COLOR = "00FF00"
+                    } else {
+                        COLOR = "FF0000"
+                    }
+
                     RESULT = formatSlackOutput(SUBJECT, env.JOB_URL, currentBuild.changeSets, STATUS)
 
                     slackSend (color: "#${COLOR}", message: "${RESULT}")
