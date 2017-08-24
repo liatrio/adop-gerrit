@@ -27,7 +27,6 @@ pipeline {
                 sh "echo \$(git tag -l | sort -V | tail -1) > result"
                 script {
                     TAG = readFile 'result'
-                    TAG = TAG.trim()
                   
                     if (!(TAG ==~ /^[0-9]+\.[0-9]+\.[0-9]+$/)) {
                         error("Invalid Git tag format! Aborting...")
