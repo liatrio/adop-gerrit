@@ -20,6 +20,43 @@ pipeline {
                 }
             }
         }
+        stage('ldop-gerrit-validate') {
+            agent any
+            steps {
+                sh "git fetch"
+                sh "echo \$(git tag -l | sort -V | tail -1) > result"
+                script {
+                    TAG = readFile 'result'
+                    TAG = TAG.trim()
+                  
+                    if (!(TAG ==~ /^[0-9]+\.[0-9]+\.[0-9]+$/)) {
+                        error("Invalid Git tag format! Aborting...")
+                    }
+
+                    if (doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}")) {
+                        error("LDOP Gerrit version already exists! Aborting...")
+                    }
+                }
+            }
+            post {
+                success {
+                    script {
+                        STATUS = "SUCCESS"
+                    }
+                }
+                failure {
+                    script {
+                        STATUS = "FAILURE"
+                    }
+                }
+                changed {
+                    script {
+                        CHANGED = "YES"
+                    }
+                }
+                always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'ldop-gerrit-validate'" } }
+            }
+        }
         stage('hadolint-lint') {
             agent {
                 docker {
@@ -107,43 +144,6 @@ pipeline {
                     }
                 }
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'dockerfile-lint'" } }
-            }
-        }
-        stage('ldop-gerrit-validate') {
-            agent any
-            steps {
-                sh "git fetch"
-                sh "echo \$(git tag -l | sort -V | tail -1) > result"
-                script {
-                    TAG = readFile 'result'
-                    TAG = TAG.trim()
-                  
-                    if (!(TAG ==~ /^[0-9]+\.[0-9]+\.[0-9]+$/)) {
-                        error("Invalid Git tag format! Aborting...")
-                    }
-
-                    if (doesVersionExist('liatrio', 'ldop-gerrit', "${TAG}")) {
-                        error("LDOP Gerrit version already exists! Aborting...")
-                    }
-                }
-            }
-            post {
-                success {
-                    script {
-                        STATUS = "SUCCESS"
-                    }
-                }
-                failure {
-                    script {
-                        STATUS = "FAILURE"
-                    }
-                }
-                changed {
-                    script {
-                        CHANGED = "YES"
-                    }
-                }
-                always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'ldop-gerrit-validate'" } }
             }
         }
         stage('ldop-gerrit-build') {
