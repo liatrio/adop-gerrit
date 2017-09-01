@@ -53,7 +53,7 @@ pipeline {
                 always { script { SUBJECT = "Build #${env.BUILD_NUMBER} of ${env.JOB_NAME} at 'dockerlint-lint'" } }
             }
         }
-        stage('Dockerfile-lint') {
+        stage('Dockerfile-atomic-lint') {
             agent {
                 docker {
                     image "projectatomic/dockerfile-lint"
@@ -133,7 +133,7 @@ pipeline {
             steps {
                 script { CHANGED = "NO" }
                 sh "docker tag liatrio/ldop-gerrit:${env.BRANCH_NAME} liatrio/ldop-gerrit:latest"
-                sh "docker push liatrio/ldop-gerrit:${TAG}"
+                sh "docker push liatrio/ldop-gerrit:latest"
                 script {
                     if ( env.BRANCH_NAME == 'master' )
                         sh "docker push liatrio/ldop-gerrit:${containerVersion}"
