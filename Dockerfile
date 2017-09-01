@@ -1,7 +1,6 @@
 FROM openfrontier/gerrit:2.10.x
 
-MAINTAINER Nick Griffin, <nicholas.griffin>
-
+LABEL version = "1.1.0"
 # Environment variables
 ENV GERRIT_USERNAME gerrit
 ENV GERRIT_PASSWORD gerrit
