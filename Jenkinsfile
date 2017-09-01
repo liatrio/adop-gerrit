@@ -78,10 +78,12 @@ pipeline {
                 sh "rm -rf test/integration/*"
                 sh "docker build -t liatrio/ldop-gerrit:${env.BRANCH_NAME} ."
                 sh "docker push liatrio/ldop-gerrit:${env.BRANCH_NAME}"
-                if ( env.BRANCH_NAME == 'master' ) {
-                    containerVersion = getVersionFromContainer("liatrio/ldop-gerrit:${env.BRANCH_NAME}")
-                    failIfVersionExists("liatrio","ldop-gerrit",containerVersion)
-                    sh "docker build -t liatrio/ldop-gerrit:${containerVersion} ."
+                script {
+                    if ( env.BRANCH_NAME == 'master' ) {
+                        containerVersion = getVersionFromContainer("liatrio/ldop-gerrit:${env.BRANCH_NAME}")
+                        failIfVersionExists("liatrio","ldop-gerrit",containerVersion)
+                        sh "docker build -t liatrio/ldop-gerrit:${containerVersion} ."
+                    }
                 }
             }
             post {
@@ -132,8 +134,10 @@ pipeline {
                 script { CHANGED = "NO" }
                 sh "docker tag liatrio/ldop-gerrit:${env.BRANCH_NAME} liatrio/ldop-gerrit:latest"
                 sh "docker push liatrio/ldop-gerrit:${TAG}"
-                if ( env.BRANCH_NAME == 'master' )
+                script {
+                    if ( env.BRANCH_NAME == 'master' )
                         sh "docker push liatrio/ldop-gerrit:${containerVersion}"
+                }
             }
             post {
                 success { script { STATUS = "SUCCESS" } }
