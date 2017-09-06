@@ -1,6 +1,6 @@
 FROM openfrontier/gerrit:2.10.x
 
-LABEL version = "1.1.0"
+LABEL version = "1.1.1"
 # Environment variables
 ENV GERRIT_USERNAME gerrit
 ENV GERRIT_PASSWORD gerrit
